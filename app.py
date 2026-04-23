@@ -1,0 +1,342 @@
+# -*- coding: utf-8 -*-
+"""
+LOF基金数据服务 - RESTful API
+场内LOF基金: 实时价格 + 净值/估值 + 溢价率 + 成交额
+
+启动命令: python app.py
+依赖: pip install flask requests apscheduler flask-cors
+"""
+import sys
+# Fix Windows console encoding before any print
+try:
+    sys.stdout.reconfigure(encoding='utf-8')
+except Exception:
+    pass
+
+import logging
+from datetime import datetime
+from flask import Flask, jsonify, request
+from flask_cors import CORS
+from apscheduler.schedulers.background import BackgroundScheduler
+
+from config import Config
+from data_fetcher import get_fetcher
+
+# ─────────────────────────────────────────────
+# 日志配置
+# ─────────────────────────────────────────────
+logging.basicConfig(
+    level=getattr(logging, Config.LOG_LEVEL),
+    format="%(asctime)s [%(levelname)s] %(name)s - %(message)s",
+    datefmt="%Y-%m-%d %H:%M:%S",
+)
+logger = logging.getLogger("lof-api")
+
+# ─────────────────────────────────────────────
+# Flask 应用
+# ─────────────────────────────────────────────
+app = Flask(__name__)
+CORS(app)  # 允许跨域，方便前端直接调用
+
+
+# ══════════════════════════════════════════════════════════════════
+# 通用响应构建
+# ══════════════════════════════════════════════════════════════════
+
+def ok(data, meta=None, status=200):
+    """成功响应: { code: 0, message, data, meta? }"""
+    payload = {"code": 0, "message": "success", "data": data}
+    if meta:
+        payload["meta"] = meta
+    return jsonify(payload), status
+
+
+def err_resp(message, code=1, status=400, details=None):
+    """错误响应: { code, message, details? }"""
+    payload = {"code": code, "message": message}
+    if details:
+        payload["details"] = details
+    return jsonify(payload), status
+
+
+# ══════════════════════════════════════════════════════════════════
+# 辅助函数
+# ══════════════════════════════════════════════════════════════════
+
+def _fmt(fund: dict, detail: bool = False) -> dict:
+    """
+    统一格式化输出字段
+    所有溢价率/溢价状态已在 data_fetcher 中计算完毕
+    """
+    premium = fund.get("premium_rate")
+    nav = fund.get("nav")
+    change_pct = fund.get("change_pct", 0)
+
+    result = {
+        # ── 基础信息 ──
+        "code":       fund.get("code"),              # 6位基金代码
+        "name":       fund.get("name"),              # 基金名称
+        # ── 交易数据 ──
+        "price":      fund.get("price"),             # 最新价（元）
+        "change_pct": change_pct,                    # 涨跌幅（%）
+        "volume":     fund.get("volume"),            # 成交量（股）
+        "amount":     fund.get("amount"),            # 成交额（元）
+        # ── 净值数据 ──
+        "nav":        nav,                          # 当前净值/估算净值（元）
+        "nav_date":   fund.get("nav_date"),         # 净值日期/估值时间
+        "is_formal_nav": fund.get("is_formal_nav", False),  # 是否盘后正式净值
+        # ── 溢价分析 ──
+        "premium_rate":  premium,                   # 溢价率（%），正=溢价，负=折价
+        "premium_status": fund.get("premium_status"),  # 溢价/折价/平价
+        # ── 推导字段 ──
+        "change_amount": round(change_pct / 100 * nav, 4) if (nav and nav > 0) else None,
+    }
+
+    if detail:
+        result.update({
+            "prev_nav": fund.get("prev_nav"),        # 昨日净值
+            "volume_w": round(fund.get("volume", 0) / 10000, 2),  # 成交量（万手）
+            "amount_w": round(fund.get("amount", 0) / 10000, 2),   # 成交额（万元）
+        })
+
+    return result
+
+
+# ══════════════════════════════════════════════════════════════════
+# API 路由
+# ══════════════════════════════════════════════════════════════════
+
+# ── 健康检查 ──
+@app.route("/health", methods=["GET"])
+def health():
+    """健康检查: 返回服务状态、缓存数量、最后更新时间"""
+    f = get_fetcher()
+    return ok({
+        "status": "running",
+        "cache_count": len(f.get_all()),
+        "last_fetch": f.last_fetch_time.isoformat() if f.last_fetch_time else None,
+        "error": f.fetch_error,
+        "refresh_interval_sec": Config.REFRESH_INTERVAL_SECONDS,
+    })
+
+
+# ── 手动刷新（慎用） ──
+@app.route("/refresh", methods=["POST"])
+def refresh():
+    """手动触发全量数据刷新"""
+    f = get_fetcher()
+    success = f.fetch_all()
+    if success:
+        return ok({"triggered": True, "count": len(f.get_all())})
+    return err_resp("刷新失败，请检查网络或稍后重试", code=2, status=500)
+
+
+# ─────────────────────────────────────────────────────────────────
+# 接口1: GET /api/funds
+# 获取全量 LOF 基金列表（分页 + 排序 + 搜索 + 筛选）
+# ─────────────────────────────────────────────────────────────────
+
+@app.route("/api/funds", methods=["GET"])
+def list_funds():
+    f = get_fetcher()
+    all_data = f.get_all()
+
+    # 服务启动中，数据尚未加载
+    if not all_data:
+        return err_resp(
+            "数据未就绪，服务正在初始化，请稍后重试",
+            code=3,
+            status=503,
+            details={"tip": "首次启动约需 1-2 分钟加载全量数据"}
+        )
+
+    # ── 分页参数 ──
+    try:
+        page     = max(1, int(request.args.get("page", 1)))
+        page_size = min(500, max(1, int(request.args.get("page_size", 100))))
+    except ValueError:
+        return err_resp("page 和 page_size 必须为正整数", code=4, status=400)
+
+    # ── 排序 ──
+    sort_field = request.args.get("sort", "amount")
+    sort_order = request.args.get("order", "desc")
+    valid_sorts = {"amount", "change_pct", "premium_rate", "price", "code", "name"}
+    if sort_field not in valid_sorts:
+        return err_resp(f"sort 可选值: {','.join(valid_sorts)}", code=5, status=400)
+    if sort_order not in {"asc", "desc"}:
+        return err_resp("order 必须是 asc 或 desc", code=6, status=400)
+
+    reverse = (sort_order == "desc")
+
+    # ── 搜索（按代码或名称） ──
+    search = (request.args.get("search") or "").strip()
+    if search:
+        s = search.upper()
+        all_data = {k: v for k, v in all_data.items()
+                    if s in k or s in v.get("name", "").upper()}
+
+    # ── 溢价/折价筛选 ──
+    filt = request.args.get("filter", "all")
+    if filt == "premium":
+        all_data = {k: v for k, v in all_data.items()
+                    if (v.get("premium_rate") or 0) > 0}
+    elif filt == "discount":
+        all_data = {k: v for k, v in all_data.items()
+                    if (v.get("premium_rate") or 0) < 0}
+
+    # ── 排序 ──
+    items = list(all_data.values())
+    if sort_field == "premium_rate":
+        items.sort(key=lambda x: x.get("premium_rate") if x.get("premium_rate") is not None else -9999.0, reverse=reverse)
+    elif sort_field == "change_pct":
+        items.sort(key=lambda x: x.get("change_pct", 0), reverse=reverse)
+    elif sort_field == "amount":
+        items.sort(key=lambda x: x.get("amount", 0), reverse=reverse)
+    elif sort_field == "price":
+        items.sort(key=lambda x: x.get("price", 0), reverse=reverse)
+    elif sort_field == "code":
+        items.sort(key=lambda x: x.get("code", ""), reverse=reverse)
+    elif sort_field == "name":
+        items.sort(key=lambda x: x.get("name", ""), reverse=reverse)
+
+    total = len(items)
+    start = (page - 1) * page_size
+    page_items = [_fmt(f) for f in items[start: start + page_size]]
+
+    return ok(
+        page_items,
+        meta={
+            "page":        page,
+            "page_size":   page_size,
+            "total":       total,
+            "total_pages": (total + page_size - 1) // page_size,
+            "last_fetch":  f.last_fetch_time.isoformat() if f.last_fetch_time else None,
+            "data_source": "东方财富 + 天天基金网",
+        }
+    )
+
+
+# ─────────────────────────────────────────────────────────────────
+# 接口2: GET /api/funds/<code>
+# 获取单只 LOF 基金详情
+# ─────────────────────────────────────────────────────────────────
+
+@app.route("/api/funds/<code>", methods=["GET"])
+def fund_detail(code: str):
+    f = get_fetcher()
+    fund = f.get_one(code)
+    if not fund:
+        return err_resp(
+            f"未找到基金: {code}",
+            code=7,
+            status=404,
+            details={"code": code, "tip": "请确认基金代码为6位数字，如 166009"}
+        )
+    return ok(_fmt(fund, detail=True))
+
+
+# ─────────────────────────────────────────────────────────────────
+# 接口3: GET /api/rankings
+# 溢价率排行榜（溢价 Top / 折价 Top）
+# ─────────────────────────────────────────────────────────────────
+
+@app.route("/api/rankings", methods=["GET"])
+def rankings():
+    f = get_fetcher()
+    all_data = f.get_all()
+
+    rank_type = request.args.get("type", "premium")
+    try:
+        limit = min(100, max(1, int(request.args.get("limit", 20))))
+    except ValueError:
+        return err_resp("limit 必须为正整数", code=8, status=400)
+
+    valid = [v for v in all_data.values() if v.get("premium_rate") is not None]
+
+    if rank_type == "premium":
+        sorted_funds = sorted(valid, key=lambda x: x["premium_rate"], reverse=True)
+        label = "溢价率最高"
+    else:
+        sorted_funds = sorted(valid, key=lambda x: x["premium_rate"])
+        label = "折价率最高"
+
+    ranked = [_fmt(f) for f in sorted_funds[:limit]]
+    return ok(ranked, meta={"type": rank_type, "label": label, "limit": limit, "total": len(sorted_funds)})
+
+
+# ══════════════════════════════════════════════════════════════════
+# 定时任务调度（APScheduler）
+# ══════════════════════════════════════════════════════════════════
+
+_scheduler: BackgroundScheduler = None
+
+
+def _scheduled_fetch():
+    """定时抓取任务（由 APScheduler 在后台线程触发）"""
+    logger.info("⏰ 定时刷新任务触发")
+    f = get_fetcher()
+    ok_flag = f.fetch_all()
+    if ok_flag:
+        logger.info(f"✅ 定时刷新完成，当前缓存 {len(f.get_all())} 只基金")
+    else:
+        logger.warning("⚠️ 定时刷新失败（网络波动或API限流，下次重试）")
+
+
+def _start_scheduler():
+    global _scheduler
+    _scheduler = BackgroundScheduler(
+        timezone="Asia/Shanghai",
+        job_defaults={
+            "coalesce":  True,   # 合并错过的任务
+            "misfire_grace_time": 60,  # 容忍60秒延迟
+            "max_instances": 1,  # 同一任务最多一个实例
+        }
+    )
+    _scheduler.add_job(
+        func=_scheduled_fetch,
+        trigger="interval",
+        seconds=Config.REFRESH_INTERVAL_SECONDS,
+        id="lof_data_refresh",
+        name="LOF基金数据定时刷新",
+        replace_existing=True,
+    )
+    _scheduler.start()
+    logger.info(f"🕐 定时调度器已启动，刷新间隔: {Config.REFRESH_INTERVAL_SECONDS}秒")
+
+
+# ══════════════════════════════════════════════════════════════════
+# 启动入口
+# ══════════════════════════════════════════════════════════════════
+
+if __name__ == "__main__":
+    print("=" * 62)
+    print("  LOF基金数据服务  v1.0")
+    print("  数据源: 东方财富 + 天天基金网（免费公开，无需Key）")
+    print("=" * 62)
+
+    f = get_fetcher()
+    print("📡 正在拉取全量LOF基金数据（首次约需1-2分钟）...")
+    ok_flag = f.fetch_all()
+    if ok_flag:
+        print(f"✅ 初始化完成，当前缓存 {len(f.get_all())} 只基金")
+    else:
+        print("⚠️ 初始化未完全成功，服务仍会启动，稍后定时任务会重试")
+
+    _start_scheduler()
+
+    print("")
+    print(f"✅ 服务已启动")
+    print(f"   API文档: http://localhost:{Config.PORT}/api/funds")
+    print(f"   健康检查: http://localhost:{Config.PORT}/health")
+    print(f"   溢价排行: http://localhost:{Config.PORT}/api/rankings")
+    print(f"   刷新间隔: {Config.REFRESH_INTERVAL_SECONDS}秒")
+    print(f"   按 Ctrl+C 停止")
+    print("=" * 62)
+
+    app.run(
+        host=Config.HOST,
+        port=Config.PORT,
+        debug=Config.DEBUG,
+        use_reloader=False,   # 防止 Windows 下双倍启动
+        threaded=True,         # 多线程支持并发请求
+    )
