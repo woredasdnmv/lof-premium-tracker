@@ -126,23 +126,11 @@ class LofFundMonitor {
 
     // ===== 三日平均溢价率（从后端API获取，字段 avg_premium_3d）=====
     getAvgPremium3d(code) {
-        // 从 this.funds 中查找
         const fund = this.funds.find(f => f.code === code);
         return fund?.avg_premium_3d ?? null;
     }
 
     // ===== 预计收益计算 =====
-    /**
-     * 计算单只基金的预计套利收益
-     * 溢价时：溢价套利（申购→场内卖出）
-     *   收益率 = 溢价率 - 申购费率 - 卖出佣金率
-     * 折价时：折价套利（场内买入→赎回）
-     *   收益率 = |折价率| - 买入佣金率 - 赎回费率(最短档)
-     * 实际投入 = min(用户最大资金量, 基金申购上限)
-     * 实际佣金 = max(投入 × 佣金费率, 佣金最低收费)
-     * 实际佣金率 = 实际佣金 / 投入
-     * 预计收益额 = 投入 × 预计收益率
-     */
     calcEstimatedProfit(fund) {
         const premium = fund.premium_rate;
         if (premium === null || premium === undefined) return null;
@@ -151,12 +139,9 @@ class LofFundMonitor {
         const price = fund.price;
         if (!nav || !price) return null;
 
-        // 实际投入 = min(最大资金量, 申购上限)
-        // purchase_limit: null=无限额, number=限额(元)
         const purchaseLimit = fund.purchase_limit;
         const capital = purchaseLimit ? Math.min(this.maxCapital, purchaseLimit) : this.maxCapital;
 
-        // 佣金计算
         const commissionRatePct = this.commissionRate / 10000;
         const rawCommission = capital * commissionRatePct;
         const actualCommission = Math.max(rawCommission, this.commissionMin);
@@ -164,7 +149,6 @@ class LofFundMonitor {
         const isMinCommission = rawCommission < this.commissionMin;
 
         if (premium > 0) {
-            // 溢价套利: 申购→场内卖出
             const purchaseFeeRate = fund.purchase_fee_rate ?? 0;
             const purchaseFeeAmount = capital * purchaseFeeRate / 100;
             const sellCommissionRate = actualCommissionRate;
@@ -184,7 +168,6 @@ class LofFundMonitor {
                 }
             };
         } else {
-            // 折价套利: 场内买入→赎回
             const buyCommissionRate = actualCommissionRate;
             const buyCommissionAmount = actualCommission;
             const redemptionFeeRate = fund.redemption_fee_rate ?? 1.5;
@@ -214,7 +197,6 @@ class LofFundMonitor {
         if (!est) return;
         const bd = est.breakdown;
 
-        // 构建弹窗内容
         let lines = [];
         lines.push(`<div class="profit-detail">`);
         lines.push(`<div class="profit-detail-title">${est.direction} · ${fund.code} ${fund.name}</div>`);
@@ -229,16 +211,13 @@ class LofFundMonitor {
         }
         lines.push(`</div>`);
 
-        // 收益率分解
         lines.push(`<div class="profit-detail-section">`);
         lines.push(`<div class="profit-detail-subtitle">📊 收益率构成</div>`);
         if (est.rate >= 0 && bd.premiumRate !== undefined) {
-            // 溢价套利
             lines.push(`<div class="profit-detail-row plus"><span>溢价率</span><span>+${bd.premiumRate.toFixed(2)}%</span></div>`);
             lines.push(`<div class="profit-detail-row minus"><span>申购费率（天天基金优惠）</span><span>−${bd.purchaseFeeRate.toFixed(2)}%</span></div>`);
             lines.push(`<div class="profit-detail-row minus"><span>卖出佣金率${bd.isMinCommission ? '（按最低收费）' : ''}</span><span>−${bd.sellCommissionRate.toFixed(4)}%</span></div>`);
         } else if (bd.discountRate !== undefined) {
-            // 折价套利
             lines.push(`<div class="profit-detail-row plus"><span>折价率</span><span>+${bd.discountRate.toFixed(2)}%</span></div>`);
             lines.push(`<div class="profit-detail-row minus"><span>买入佣金率${bd.isMinCommission ? '（按最低收费）' : ''}</span><span>−${bd.buyCommissionRate.toFixed(4)}%</span></div>`);
             lines.push(`<div class="profit-detail-row minus"><span>赎回费率（≤6天）</span><span>−${bd.redemptionFeeRate.toFixed(2)}%</span></div>`);
@@ -247,7 +226,6 @@ class LofFundMonitor {
         lines.push(`<div class="profit-detail-row ${rateClass} total"><span>预计收益率</span><span>${est.rate > 0 ? '+' : ''}${est.rate.toFixed(2)}%</span></div>`);
         lines.push(`</div>`);
 
-        // 收益额分解
         lines.push(`<div class="profit-detail-section">`);
         lines.push(`<div class="profit-detail-subtitle">💵 收益额构成</div>`);
         if (est.rate >= 0 && bd.purchaseFeeAmount !== undefined) {
@@ -266,12 +244,10 @@ class LofFundMonitor {
         lines.push(`<div class="profit-detail-footer">⚠️ 套利按最短时间估算，忽略T+N价格波动风险</div>`);
         lines.push(`</div>`);
 
-        // 使用现有的 toast 机制或自定义弹窗
         this._showProfitPopover(lines.join(''), fundCode);
     }
 
     _showProfitPopover(html, fundCode) {
-        // 移除已有弹窗
         const existing = document.getElementById('profitPopover');
         if (existing) existing.remove();
 
@@ -281,7 +257,6 @@ class LofFundMonitor {
         overlay.innerHTML = `<div class="profit-popover-card"><div class="profit-popover-close" id="profitPopoverClose">✕</div>${html}</div>`;
         document.body.appendChild(overlay);
 
-        // 关闭事件
         const close = () => { overlay.remove(); };
         document.getElementById('profitPopoverClose').addEventListener('click', close);
         overlay.addEventListener('click', (e) => { if (e.target === overlay) close(); });
@@ -289,29 +264,25 @@ class LofFundMonitor {
 
     applyFilters() {
         let filtered = [...this.funds];
-        // 搜索关键词筛选
         if (this.searchKeyword) {
             const keyword = this.searchKeyword.toLowerCase();
-            filtered = filtered.filter(fund => 
+            filtered = filtered.filter(fund =>
                 fund.code.toLowerCase().includes(keyword) ||
                 fund.name.toLowerCase().includes(keyword)
             );
         }
-        // 溢价率/折价率绝对值阈值筛选
         if (this.threshold > 0) {
             filtered = filtered.filter(fund => {
                 const absRate = Math.abs(fund.premium_rate ?? 0);
                 return absRate >= this.threshold;
             });
         }
-        // 最小成交额阈值筛选
         if (this.minAmount > 0) {
             filtered = filtered.filter(fund => {
                 const amountWan = (fund.amount ?? 0) / 10000;
                 return amountWan >= this.minAmount;
             });
         }
-        // 三日平均溢价率绝对值阈值筛选
         if (this.avgThreshold > 0) {
             filtered = filtered.filter(fund => {
                 const avg = this.getAvgPremium3d(fund.code);
@@ -362,24 +333,26 @@ class LofFundMonitor {
         const premiumClass = pr > 0 ? 'premium-positive' : pr < 0 ? 'premium-negative' : 'premium-zero';
         const premiumSign = pr > 0 ? '+' : '';
         const premiumText = pr !== null && pr !== undefined ? premiumSign + pr.toFixed(2) + '%' : '--';
-        // 三日平均溢价率
+
         const avg3d = fund.avg_premium_3d;
         const avgPremiumClass = avg3d > 0 ? 'premium-positive' : avg3d < 0 ? 'premium-negative' : 'premium-zero';
         const avgPremiumSign = avg3d > 0 ? '+' : '';
         const avgPremiumText = avg3d !== null && avg3d !== undefined ? avgPremiumSign + avg3d.toFixed(2) + '%' : '--';
+
         const changeClass = fund.change_pct >= 0 ? 'up' : 'down';
         const changeSign = fund.change_pct >= 0 ? '+' : '';
         const changeText = fund.change_pct !== null && fund.change_pct !== undefined ? changeSign + fund.change_pct.toFixed(2) + '%' : '--';
+
         const navType = fund.is_formal_nav ? '正式' : '估算';
         const navText = fund.nav !== null && fund.nav !== undefined ? fund.nav.toFixed(3) : '--';
         const priceText = fund.price !== null && fund.price !== undefined ? fund.price.toFixed(3) : '--';
-        // amount 字段为元，转为万元/亿元显示
+
         let amountText = '--';
         if (fund.amount !== null && fund.amount !== undefined) {
             const amountWan = fund.amount / 10000;
             amountText = amountWan >= 10000 ? (amountWan / 10000).toFixed(2) + '亿' : amountWan.toFixed(2) + '万';
         }
-        // 预计收益计算
+
         const estProfit = this.calcEstimatedProfit(fund);
         let estProfitRateText = '--';
         let estProfitRateClass = 'premium-zero';
@@ -429,7 +402,6 @@ class LofFundMonitor {
                 </div>
             `).join('');
         }
-        // 移动端溢价排行条
         const mobileScroll = document.getElementById('mobileRankingScroll');
         if (mobileScroll) {
             mobileScroll.innerHTML = funds.slice(0, 10).map(fund => `
@@ -444,7 +416,6 @@ class LofFundMonitor {
     renderDiscountRankings() {
         if (!this.funds.length) return;
         const sorted = [...this.funds].sort((a, b) => (a.premium_rate ?? 0) - (b.premium_rate ?? 0));
-        // PC端折价排行榜
         const discountContainer = document.getElementById('discountContainer');
         if (discountContainer) {
             discountContainer.innerHTML = sorted.slice(0, 5).map((fund, index) => `
@@ -457,7 +428,6 @@ class LofFundMonitor {
                 </div>
             `).join('');
         }
-        // 移动端折价排行条
         const mobileDiscountScroll = document.getElementById('mobileDiscountScroll');
         if (mobileDiscountScroll) {
             mobileDiscountScroll.innerHTML = sorted.slice(0, 10).map(fund => `
@@ -474,21 +444,26 @@ class LofFundMonitor {
         const premiumClass = pr > 0 ? 'mc-pos' : pr < 0 ? 'mc-neg' : 'mc-zero';
         const premiumSign = pr > 0 ? '+' : '';
         const premiumText = pr !== null && pr !== undefined ? premiumSign + pr.toFixed(2) + '%' : '--';
+
         const avg3d = fund.avg_premium_3d;
         const avgPremiumClass = avg3d > 0 ? 'mc-pos' : avg3d < 0 ? 'mc-neg' : 'mc-zero';
         const avgPremiumSign = avg3d > 0 ? '+' : '';
         const avgPremiumText = avg3d !== null && avg3d !== undefined ? avgPremiumSign + avg3d.toFixed(2) + '%' : '--';
+
         const changeSign = fund.change_pct >= 0 ? '+' : '';
         const changeClass = fund.change_pct >= 0 ? 'up' : 'down';
         const changeText = fund.change_pct !== null && fund.change_pct !== undefined ? changeSign + fund.change_pct.toFixed(2) + '%' : '--';
+
         const navType = fund.is_formal_nav ? '正式' : '估算';
         const navText = fund.nav !== null && fund.nav !== undefined ? navType + ' ' + fund.nav.toFixed(3) : '--';
         const priceText = fund.price !== null && fund.price !== undefined ? fund.price.toFixed(3) : '--';
+
         let amountText = '--';
         if (fund.amount !== null && fund.amount !== undefined) {
             const amountWan = fund.amount / 10000;
             amountText = amountWan >= 10000 ? (amountWan / 10000).toFixed(1) + '亿' : amountWan.toFixed(0) + '万';
         }
+
         const statusHtml = fund.premium_status ? `<span class="mc-status-badge status-badge ${fund.premium_status}">${fund.premium_status}</span>` : '';
         return `<div class="mobile-card" data-code="${fund.code}">
             <div class="mc-left"><span class="mc-code">${fund.code}</span><span class="mc-name">${fund.name}</span>${statusHtml}</div>
@@ -517,7 +492,6 @@ class LofFundMonitor {
         if (retryBtn) retryBtn.addEventListener('click', () => this.init());
         const manualRefreshBtn = document.getElementById('manualRefreshBtn');
         if (manualRefreshBtn) manualRefreshBtn.addEventListener('click', () => this.handleManualRefresh());
-        // 设置弹窗事件
         const settingsBtn = document.getElementById('settingsBtn');
         const closeSettingsBtn = document.getElementById('closeSettingsBtn');
         const settingsModal = document.getElementById('settingsModal');
@@ -535,7 +509,6 @@ class LofFundMonitor {
 
     // ===== 深色模式 =====
     toggleDarkMode() {
-        // 循环切换: '' -> 'dark' -> 'light' -> ''
         if (this.darkMode === '') {
             this.darkMode = 'dark';
         } else if (this.darkMode === 'dark') {
@@ -544,31 +517,26 @@ class LofFundMonitor {
             this.darkMode = '';
         }
         localStorage.setItem('lof_darkMode', this.darkMode);
-        this.applyDarkMode(true); // 应用并保存
+        this.applyDarkMode(true);
     }
 
     applyDarkMode(save) {
         const btn = document.getElementById('darkModeBtn');
         const root = document.documentElement;
 
-        // 清除之前的类
         root.classList.remove('dark-mode', 'light-mode');
 
         if (this.darkMode === 'dark') {
             root.classList.add('dark-mode');
-            if (btn) btn.textContent = '☀️';
-            if (btn) btn.title = '当前：深色模式（点击切换浅色）';
+            if (btn) { btn.textContent = '☀️'; btn.title = '当前：深色模式（点击切换浅色）'; }
         } else if (this.darkMode === 'light') {
             root.classList.add('light-mode');
-            if (btn) btn.textContent = '🌙';
-            if (btn) btn.title = '当前：浅色模式（点击跟随系统）';
+            if (btn) { btn.textContent = '🌙'; btn.title = '当前：浅色模式（点击跟随系统）'; }
         } else {
-            // 跟随系统
             if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
                 root.classList.add('dark-mode');
             }
-            if (btn) btn.textContent = '🌗';
-            if (btn) btn.title = '当前：跟随系统（点击切换深色）';
+            if (btn) { btn.textContent = '🌗'; btn.title = '当前：跟随系统（点击切换深色）'; }
         }
     }
 
@@ -668,7 +636,6 @@ class LofFundMonitor {
         }, 300);
     }
 
-
     startAutoRefresh() {
         this.stopAutoRefresh();
         this.refreshTimer = setInterval(async () => {
@@ -690,11 +657,8 @@ class LofFundMonitor {
     }
 
     updateStatus(message) {
-        // 状态文字现在只用于初始加载等场景，刷新状态由 refreshStatus 元素单独显示
         const el = document.getElementById('statusText');
-        if (el && el.textContent !== message) {
-            el.textContent = message;
-        }
+        if (el && el.textContent !== message) el.textContent = message;
     }
 
     updateLoaderText(text) {
@@ -706,7 +670,6 @@ class LofFundMonitor {
         if (document.getElementById('cacheCount')) document.getElementById('cacheCount').textContent = data.cache_count ?? '-';
         if (document.getElementById('lastFetch')) document.getElementById('lastFetch').textContent = this.formatTime(data.last_fetch);
         if (document.getElementById('refreshInterval')) document.getElementById('refreshInterval').textContent = (data.refresh_interval_sec || 300) / 60 + '分钟';
-        // 基金总数优先使用 API 返回的总数字段，否则用缓存数
         const total = data.total ?? data.cache_count ?? this.funds.length;
         if (document.getElementById('totalFunds')) document.getElementById('totalFunds').textContent = total;
     }
@@ -789,7 +752,6 @@ class LofFundMonitor {
             icon.classList.add('bouncing');
         }
 
-        // 显示"刷新中..."
         if (statusEl) {
             statusEl.textContent = '刷新中...';
             statusEl.classList.add('show');
@@ -799,24 +761,14 @@ class LofFundMonitor {
             await this.checkHealth();
             await this.loadRankings();
             await this.loadFunds();
-
-            // 显示"✓"成功
-            if (statusEl) {
-                statusEl.textContent = '✓';
-            }
+            if (statusEl) statusEl.textContent = '✓';
         } catch (error) {
-            if (statusEl) {
-                statusEl.textContent = '✗';
-            }
+            if (statusEl) statusEl.textContent = '✗';
             this.showToast('刷新失败: ' + error.message);
         } finally {
             if (btn) { btn.disabled = false; }
-
-            // 2秒后隐藏状态
             setTimeout(() => {
-                if (statusEl) {
-                    statusEl.classList.remove('show');
-                }
+                if (statusEl) statusEl.classList.remove('show');
             }, 2000);
         }
     }

@@ -41,25 +41,15 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; b
     min-width: 36px;
     height: 32px;
 }
-.btn-dark-mode:hover {
-    background: rgba(255,255,255,0.25);
-    transform: scale(1.05);
-}
+.btn-dark-mode:hover { background: rgba(255,255,255,0.25); transform: scale(1.05); }
 .btn-dark-mode:active { transform: scale(0.95); }
 
 /* 刷新按钮 */
 .btn-manual-refresh {
-    background: transparent;
-    border: none;
-    cursor: pointer;
-    padding: 0;
-    width: 32px;
-    height: 32px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    border-radius: 50%;
-    transition: transform 0.2s ease;
+    background: transparent; border: none; cursor: pointer;
+    padding: 0; width: 32px; height: 32px;
+    display: flex; align-items: center; justify-content: center;
+    border-radius: 50%; transition: transform 0.2s ease;
 }
 .btn-manual-refresh:hover { transform: scale(1.1); }
 .btn-manual-refresh:active { transform: scale(0.95); }
@@ -222,67 +212,31 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; b
 /* Responsive */
 @media (max-width: 1200px) { .main-content { grid-template-columns: 1fr; } .sidebar { flex-direction: row; } .sidebar .panel { flex: 1; } }
 
-/* ========== 移动端全面重做 ========== */
+/* ========== 移动端 ========== */
 @media (max-width: 768px) {
     .container { padding: 0; }
-
-    /* Header - 紧凑 */
     .header { border-radius: 0; padding: 14px 16px; margin-bottom: 0; }
     .header h1 { font-size: 1.15rem; }
-.brand-title { display: flex; align-items: center; gap: 8px; }
-.brand-logo { width: 28px; height: 28px; border-radius: 50%; object-fit: cover; }
     .status-text { font-size: 0.75rem; }
-    .taiji { width: 24px; height: 24px; }
-    .taiji::before, .taiji::after { width: 12px; height: 12px; }
-    .taiji::before { box-shadow: inset 0 0 0 2.5px #333, inset 0 0 0 4.5px #fff; }
-    .taiji::after { box-shadow: inset 0 0 0 2.5px #fff, inset 0 0 0 4.5px #333; }
-
-    /* Status Bar - 2列紧凑 */
     .status-bar { grid-template-columns: repeat(2, 1fr); gap: 8px; padding: 10px 12px; margin-bottom: 0; background: var(--bg); }
     .status-item { padding: 10px 12px; border-radius: 8px; }
     .status-label { font-size: 0.75rem; }
     .status-value { font-size: 1.05rem; }
-
-    /* 移动端排行条 */
-    .mobile-ranking-strip {
-        display: flex; align-items: center; gap: 10px;
-        padding: 10px 12px; background: var(--card); border-bottom: 1px solid var(--border);
-        overflow: hidden;
-    }
+    .mobile-ranking-strip { display: flex; align-items: center; gap: 10px; padding: 10px 12px; background: var(--card); border-bottom: 1px solid var(--border); overflow: hidden; }
     .strip-header { font-size: 0.8rem; font-weight: 600; color: var(--pos); white-space: nowrap; }
-    .strip-scroll {
-        display: flex; gap: 8px; overflow-x: auto; flex: 1;
-        scrollbar-width: none; -ms-overflow-style: none;
-    }
+    .strip-scroll { display: flex; gap: 8px; overflow-x: auto; flex: 1; scrollbar-width: none; -ms-overflow-style: none; }
     .strip-scroll::-webkit-scrollbar { display: none; }
-    .strip-item {
-        display: flex; flex-direction: column; align-items: center; gap: 2px;
-        background: #fef5f5; border-radius: 8px; padding: 6px 10px;
-        min-width: 70px; flex-shrink: 0;
-    }
+    .strip-item { display: flex; flex-direction: column; align-items: center; gap: 2px; background: #fef5f5; border-radius: 8px; padding: 6px 10px; min-width: 70px; flex-shrink: 0; }
     .strip-item .si-code { font-size: 0.7rem; font-weight: 600; color: var(--text); }
     .strip-item .si-rate { font-size: 0.8rem; font-weight: 700; color: var(--pos); }
     .mobile-ranking-strip-neg { background: #f8fffe; border-bottom-color: #e0f0ec; }
     .strip-header-neg { color: var(--neg) !important; }
     .mobile-ranking-strip-neg .strip-item { background: #f0faf7; }
     .mobile-ranking-strip-neg .strip-item .si-rate { color: var(--neg); }
-
-    /* 隐藏PC端侧边栏、表格 */
     .sidebar { display: none !important; }
     .table-container { display: none !important; }
-
-    /* 显示移动端卡片 */
     .mobile-card-list { display: flex; flex-direction: column; gap: 0; }
-    .mobile-card {
-        display: grid;
-        grid-template-columns: 1fr auto;
-        grid-template-rows: auto auto;
-        padding: 12px 14px;
-        border-bottom: 1px solid var(--border);
-        background: var(--card);
-        transition: background 0.15s;
-        gap: 4px 12px;
-    }
+    .mobile-card { display: grid; grid-template-columns: 1fr auto; grid-template-rows: auto auto; padding: 12px 14px; border-bottom: 1px solid var(--border); background: var(--card); transition: background 0.15s; gap: 4px 12px; }
     .mobile-card:active { background: #f0f2f5; }
     .mc-left { grid-column: 1; grid-row: 1; display: flex; align-items: baseline; gap: 8px; min-width: 0; }
     .mc-code { font-size: 0.85rem; font-weight: 700; color: var(--text); }
@@ -301,29 +255,19 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; b
     .mc-status-badge { font-size: 0.65rem; padding: 1px 5px; border-radius: 3px; }
     .mobile-empty { text-align: center; padding: 60px 20px; color: var(--text2); }
     .mobile-empty .icon { font-size: 2.5rem; display: block; margin-bottom: 8px; }
-
-    /* Toolbar */
     .toolbar { flex-direction: row; padding: 10px 12px; gap: 8px; }
     .search-box { max-width: 100%; flex: 1; }
     .search-box input { padding: 8px 50px 8px 12px; font-size: 0.85rem; border-radius: 8px; }
     .btn-settings { padding: 4px 8px; font-size: 0.7rem; border-radius: 4px; right: 4px; }
     .pagination-info { font-size: 0.75rem; white-space: nowrap; }
-
-    /* Content */
     .content { border-radius: 0; padding: 0; box-shadow: none; }
-
-    /* Pagination */
     .pagination-bar { padding: 10px 12px; gap: 8px; }
     .page-btn { padding: 8px 14px; font-size: 0.85rem; }
     .page-info { font-size: 0.8rem; }
     .page-size-select { display: none; }
-
-    /* Footer */
     .footer { margin-top: 0; padding: 16px 12px; font-size: 0.75rem; }
-    .footer .tip { display: none; }
 }
 
-/* PC端隐藏移动端专用元素 */
 @media (min-width: 769px) {
     .mobile-ranking-strip { display: none; }
     .mobile-card-list { display: none; }
@@ -331,132 +275,54 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; b
 
 /* ===== 预计收益详情弹窗 ===== */
 .btn-profit-info {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    width: 16px;
-    height: 16px;
-    border-radius: 50%;
-    border: 1px solid #aaa;
-    background: transparent;
-    color: #888;
-    font-size: 11px;
-    font-weight: bold;
-    cursor: pointer;
-    margin-left: 4px;
-    vertical-align: middle;
-    line-height: 1;
-    padding: 0;
-    transition: all 0.15s;
+    display: inline-flex; align-items: center; justify-content: center;
+    width: 16px; height: 16px; border-radius: 50%;
+    border: 1px solid #aaa; background: transparent;
+    color: #888; font-size: 11px; font-weight: bold;
+    cursor: pointer; margin-left: 4px; vertical-align: middle;
+    line-height: 1; padding: 0; transition: all 0.15s;
 }
-.btn-profit-info:hover {
-    border-color: var(--primary);
-    color: var(--primary);
-    background: #f0f4ff;
-}
+.btn-profit-info:hover { border-color: var(--primary); color: var(--primary); background: #f0f4ff; }
 
 .profit-popover-overlay {
-    position: fixed;
-    top: 0; left: 0; right: 0; bottom: 0;
-    background: rgba(0,0,0,0.35);
-    z-index: 9999;
-    display: flex;
-    align-items: center;
-    justify-content: center;
+    position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+    background: rgba(0,0,0,0.35); z-index: 9999;
+    display: flex; align-items: center; justify-content: center;
     animation: fadeIn 0.15s ease;
 }
 @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
 
 .profit-popover-card {
-    background: #fff;
-    border-radius: 12px;
+    background: #fff; border-radius: 12px;
     box-shadow: 0 8px 32px rgba(0,0,0,0.18);
-    max-width: 380px;
-    width: 90%;
-    max-height: 80vh;
-    overflow-y: auto;
-    position: relative;
-    padding: 20px;
+    max-width: 380px; width: 90%; max-height: 80vh;
+    overflow-y: auto; position: relative; padding: 20px;
     animation: slideUp 0.2s ease;
 }
 @keyframes slideUp { from { transform: translateY(20px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
 
 .profit-popover-close {
-    position: absolute;
-    top: 12px; right: 14px;
-    width: 28px; height: 28px;
-    border-radius: 50%;
-    border: none;
-    background: #f0f0f0;
-    color: #666;
-    font-size: 16px;
-    cursor: pointer;
-    display: flex;
-    align-items: center;
-    justify-content: center;
+    position: absolute; top: 12px; right: 14px;
+    width: 28px; height: 28px; border-radius: 50%;
+    border: none; background: #f0f0f0; color: #666;
+    font-size: 16px; cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
     transition: background 0.15s;
 }
 .profit-popover-close:hover { background: #e0e0e0; }
 
 .profit-detail { font-size: 14px; color: #333; }
-.profit-detail-title {
-    font-size: 15px;
-    font-weight: 600;
-    margin-bottom: 14px;
-    padding-right: 24px;
-}
-.profit-detail-section {
-    background: #f8f9fa;
-    border-radius: 8px;
-    padding: 10px 12px;
-    margin-bottom: 10px;
-}
-.profit-detail-subtitle {
-    font-size: 13px;
-    font-weight: 600;
-    color: #555;
-    margin-bottom: 6px;
-}
-.profit-detail-row {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 3px 0;
-    font-size: 13px;
-    color: #666;
-}
-.profit-detail-row span:last-child {
-    font-family: 'Menlo', 'Consolas', monospace;
-    font-size: 13px;
-}
+.profit-detail-title { font-size: 15px; font-weight: 600; margin-bottom: 14px; padding-right: 24px; }
+.profit-detail-section { background: #f8f9fa; border-radius: 8px; padding: 10px 12px; margin-bottom: 10px; }
+.profit-detail-subtitle { font-size: 13px; font-weight: 600; color: #555; margin-bottom: 6px; }
+.profit-detail-row { display: flex; justify-content: space-between; align-items: center; padding: 3px 0; font-size: 13px; color: #666; }
+.profit-detail-row span:last-child { font-family: 'Menlo', 'Consolas', monospace; font-size: 13px; }
 .profit-detail-row.plus span:last-child { color: var(--pos); font-weight: 500; }
 .profit-detail-row.minus span:last-child { color: var(--neg); font-weight: 500; }
-.profit-detail-row.highlight {
-    background: #e8f4f8;
-    border-radius: 4px;
-    padding: 4px 6px;
-    margin: 2px -6px;
-    font-weight: 500;
-    color: #333;
-}
-.profit-detail-row.total {
-    border-top: 1px solid #e0e0e0;
-    margin-top: 4px;
-    padding-top: 6px;
-    font-weight: 700;
-    font-size: 14px;
-    color: #333;
-}
-.profit-detail-row.hint {
-    font-size: 11px;
-    color: #999;
-}
-.profit-detail-footer {
-    font-size: 11px;
-    color: #999;
-    text-align: center;
-    margin-top: 8px;
-}
+.profit-detail-row.highlight { background: #e8f4f8; border-radius: 4px; padding: 4px 6px; margin: 2px -6px; font-weight: 500; color: #333; }
+.profit-detail-row.total { border-top: 1px solid #e0e0e0; margin-top: 4px; padding-top: 6px; font-weight: 700; font-size: 14px; color: #333; }
+.profit-detail-row.hint { font-size: 11px; color: #999; }
+.profit-detail-footer { font-size: 11px; color: #999; text-align: center; margin-top: 8px; }
 
 /* ========== 深色模式样式 ========== */
 .dark-mode {
@@ -471,60 +337,29 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; b
     --primary: #5c9eff;
 }
 .dark-mode body { background: var(--bg); color: var(--text); }
-.dark-mode .header {
-    background: linear-gradient(135deg, #1a1a40 0%, #2d1b69 100%);
-    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
-}
-.dark-mode .btn-dark-mode {
-    background: rgba(255,255,255,0.1);
-    border-color: rgba(255,255,255,0.2);
-}
+.dark-mode .header { background: linear-gradient(135deg, #1a1a40 0%, #2d1b69 100%); box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4); }
+.dark-mode .btn-dark-mode { background: rgba(255,255,255,0.1); border-color: rgba(255,255,255,0.2); }
 .dark-mode .btn-dark-mode:hover { background: rgba(255,255,255,0.2); }
 .dark-mode .status-bar { background: var(--bg); }
-.dark-mode .status-item {
-    background: var(--card);
-    box-shadow: 0 2px 8px rgba(0,0,0,0.2);
-}
-.dark-mode .panel {
-    background: var(--card);
-    box-shadow: 0 2px 12px rgba(0,0,0,0.2);
-}
-.dark-mode .content {
-    background: var(--card);
-    box-shadow: 0 2px 12px rgba(0,0,0,0.15);
-}
+.dark-mode .status-item { background: var(--card); box-shadow: 0 2px 8px rgba(0,0,0,0.2); }
+.dark-mode .panel { background: var(--card); box-shadow: 0 2px 12px rgba(0,0,0,0.2); }
+.dark-mode .content { background: var(--card); box-shadow: 0 2px 12px rgba(0,0,0,0.15); }
 .dark-mode .ranking-item { background: #1e2a4a; }
 .dark-mode .ranking-item:hover { background: #253358; }
 .dark-mode .fund-table thead { background: #1a1a38; }
 .dark-mode .fund-table td { border-bottom-color: var(--border); }
 .dark-mode .fund-table th { border-bottom-color: var(--border); color: var(--text2); }
 .dark-mode .fund-row:hover { background-color: #1e2a4a; }
-.dark-mode .search-box input {
-    background: var(--bg);
-    color: var(--text);
-    border-color: var(--border);
-}
-.dark-mode .input-with-unit input {
-    background: var(--bg);
-    color: var(--text);
-    border-color: var(--border);
-}
+.dark-mode .search-box input { background: var(--bg); color: var(--text); border-color: var(--border); }
+.dark-mode .input-with-unit input { background: var(--bg); color: var(--text); border-color: var(--border); }
 .dark-mode .modal-content { background: var(--card); color: var(--text); }
 .dark-mode .modal-header { border-bottom-color: var(--border); }
 .dark-mode .modal-footer { border-top-color: var(--border); }
 .dark-mode .btn-secondary { background: #2a2a4a; color: var(--text); }
 .dark-mode .btn-secondary:hover { background: #3a3a5a; }
-.dark-mode .page-btn {
-    background: var(--card);
-    color: var(--text);
-    border-color: var(--border);
-}
+.dark-mode .page-btn { background: var(--card); color: var(--text); border-color: var(--border); }
 .dark-mode .page-btn:hover:not(:disabled) { background: var(--primary); color: white; }
-.dark-mode .page-size-select {
-    background: var(--card);
-    color: var(--text);
-    border-color: var(--border);
-}
+.dark-mode .page-size-select { background: var(--card); color: var(--text); border-color: var(--border); }
 .dark-mode .nav-badge { background: #1a3a5c; color: var(--primary); }
 .dark-mode .status-badge.溢价 { background: #3d1a1a; color: var(--pos); }
 .dark-mode .status-badge.折价 { background: #1a3d22; color: var(--neg); }
@@ -549,15 +384,8 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; b
 .dark-mode .profit-detail-row.highlight { background: #1a2a48; color: var(--text); }
 .dark-mode .profit-detail-row.total { border-top-color: var(--border); color: var(--text); }
 .dark-mode .profit-detail-footer { color: var(--text2); }
-.dark-mode .btn-profit-info {
-    border-color: #555;
-    color: #888;
-}
-.dark-mode .btn-profit-info:hover {
-    border-color: var(--primary);
-    color: var(--primary);
-    background: #1a2a48;
-}
+.dark-mode .btn-profit-info { border-color: #555; color: #888; }
+.dark-mode .btn-profit-info:hover { border-color: var(--primary); color: var(--primary); background: #1a2a48; }
 .dark-mode .legend-color.premium-zero { background: var(--zero); }
 .dark-mode .loader-overlay { background: rgba(26, 26, 46, 0.95); }
 .dark-mode .error-container { background: rgba(26, 26, 46, 0.98); }
@@ -568,7 +396,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; b
 .dark-mode .form-hint { color: var(--text2); }
 .dark-mode .loading-hint { color: var(--text2); }
 
-/* 强制浅色模式（用户选择浅色时覆盖系统偏好） */
+/* 强制浅色模式（覆盖系统偏好） */
 .light-mode {
     --bg: #f5f7fa;
     --card: #ffffff;
