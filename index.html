@@ -16,7 +16,6 @@
             <div class="header-info">
                 <button id="darkModeBtn" class="btn-dark-mode" title="切换深色/浅色模式">🌙</button>
                 <span id="statusText" class="status-text">加载中...</span>
-                <span class="auto-refresh-label">自动刷新</span>
                 <button id="manualRefreshBtn" class="btn-manual-refresh" title="刷新数据">
                     <svg class="refresh-icon" width="32" height="32" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
                         <!-- 元宝主体 -->
@@ -223,7 +222,57 @@
             <p class="credit" style="text-align:right; font-size:12px; color:#999; margin-top:8px;">@金快查 2026 | @HanK</p>
         </footer>
     </div>
+
+    <!-- 基金详情弹窗 -->
+    <div id="fundDetailModal" class="fund-detail-overlay" style="display:none;">
+        <div class="fund-detail-modal">
+            <div class="fd-header">
+                <h3 id="fundDetailTitle">基金详情</h3>
+                <button id="fdCloseBtn" class="fd-close" title="关闭">&times;</button>
+            </div>
+            <div id="fdSkeleton" class="fd-skeleton show">
+                <div class="fd-skeleton-kpi"><span></span><span></span><span></span><span></span><span></span><span></span></div>
+                <div class="fd-skeleton-grid"></div>
+            </div>
+            <div id="fdPhase1" class="fd-phase hidden">
+                <div class="fd-kpi-grid">
+                    <div class="fd-kpi-item"><span class="fd-kpi-label">代码</span><span class="fd-kpi-value fd-code-name" id="fdCode" data-copy>--</span></div>
+                    <div class="fd-kpi-item"><span class="fd-kpi-label">名称</span><span class="fd-kpi-value fd-code-name" id="fdName" data-copy>--</span></div>
+                    <div class="fd-kpi-item"><span class="fd-kpi-label">现价</span><span class="fd-kpi-value" id="fdPrice">--</span></div>
+                    <div class="fd-kpi-item"><span class="fd-kpi-label">净值</span><span class="fd-kpi-value" id="fdNav">--</span></div>
+                    <div class="fd-kpi-item"><span class="fd-kpi-label">溢价率</span><span class="fd-kpi-value" id="fdPremiumRate">--</span></div>
+                    <div class="fd-kpi-item"><span class="fd-kpi-label">三日均溢</span><span class="fd-kpi-value" id="fdAvgPremium">--</span></div>
+                    <div class="fd-kpi-item"><span class="fd-kpi-label">成交额</span><span class="fd-kpi-value" id="fdAmount">--</span></div>
+                    <div class="fd-kpi-item"><span class="fd-kpi-label">状态</span><span class="fd-kpi-value" id="fdStatus">--</span></div>
+                    <div class="fd-kpi-item"><span class="fd-kpi-label">净值日期</span><span class="fd-kpi-value" id="fdNavDate">--</span></div>
+                </div>
+                <div class="fd-profit-section">
+                    <div class="fd-profit-header">
+                        <span class="fd-profit-title">预计收益额</span>
+                        <span class="fd-profit-val" id="fdEstProfit">--</span>
+                        <button class="fd-profit-help" id="fdProfitHelp" title="查看详细计算">?</button>
+                    </div>
+                    <div id="fdFeeBreakdown" class="fd-fee-breakdown"></div>
+                </div>
+            </div>
+            <div id="fdPhase2" class="fd-phase">
+                <div class="fd-chart-legend">
+                    <span class="fd-legend-item">
+                        <span class="fd-legend-dot" style="background:#ff7a45"></span> 场内价格
+                        <button class="fd-info-icon" data-tip="price" title="了解场内价格">?</button>
+                    </span>
+                    <span class="fd-legend-item">
+                        <span class="fd-legend-dot" style="background:#40a9ff"></span> 场外净值
+                        <button class="fd-info-icon" data-tip="nav" title="了解场外净值">?</button>
+                    </span>
+                </div>
+                <div class="fd-chart-container"><canvas id="fdChart"></canvas></div>
+            </div>
+        </div>
+    </div>
+
     <script src="js/config.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
     <script src="js/api.js"></script>
     <script src="js/app.js"></script>
 </body>
