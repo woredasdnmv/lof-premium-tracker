@@ -1,1 +1,5 @@
--r backend/requirements.txt
+flask>=2.3.0
+requests>=2.31.0
+flask-cors>=4.0.0
+gunicorn>=21.0.0
+urllib3>=2.0.0
