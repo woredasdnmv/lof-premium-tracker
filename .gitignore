@@ -8,11 +8,7 @@ current_snapshot.json
 fee_cache.json
 
 # Temp files
-_*.js
 _*.bat
-
-# But allow shared lib modules in functions/
-!functions/_lib.js
 
 # Wrangler cache
 .wrangler/
