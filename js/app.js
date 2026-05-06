@@ -14,10 +14,6 @@ class LofFundMonitor {
         this.refreshTimer = null;
         this.searchTimeout = null;
         this.isLoading = false;
-        this.detailChart = null;
-        this.CHART_CACHE_KEY_PREFIX = 'lof_chart_v2_';
-        this.CHART_CACHE_MAX = 50;
-        this.CHART_CACHE_TTL = 30 * 60 * 1000;
         // 筛选参数（从 localStorage 恢复或用默认值）
         this.threshold = parseFloat(localStorage.getItem('lof_threshold')) || 0;
         this.avgThreshold = parseFloat(localStorage.getItem('lof_avgThreshold')) || 0;
@@ -500,6 +496,18 @@ class LofFundMonitor {
         if (settingsModal) settingsModal.addEventListener('click', e => { if (e.target === settingsModal) this.closeSettingsModal(); });
         if (applySettingsBtn) applySettingsBtn.addEventListener('click', () => this.applySettings());
         if (resetSettingsBtn) resetSettingsBtn.addEventListener('click', () => this.resetSettings());
+        // 分页按钮（替代HTML内联onclick）
+        const firstPageBtn = document.getElementById("firstPageBtn");
+        const prevPageBtn = document.getElementById("prevPageBtn");
+        const nextPageBtn = document.getElementById("nextPageBtn");
+        const lastPageBtn = document.getElementById("lastPageBtn");
+        const pageSizeSelect = document.getElementById("pageSizeSelect");
+        if (firstPageBtn) firstPageBtn.addEventListener("click", () => this.goToPage(1));
+        if (prevPageBtn) prevPageBtn.addEventListener("click", () => this.changePage(-1));
+        if (nextPageBtn) nextPageBtn.addEventListener("click", () => this.changePage(1));
+        if (lastPageBtn) lastPageBtn.addEventListener("click", () => this.goToLastPage());
+        if (pageSizeSelect) pageSizeSelect.addEventListener("change", (e) => this.changePageSize(e.target.value));
+
         // 深色模式按钮
         const darkModeBtn = document.getElementById('darkModeBtn');
         if (darkModeBtn) darkModeBtn.addEventListener('click', () => this.toggleDarkMode());
@@ -519,28 +527,27 @@ class LofFundMonitor {
         if (initTh) initTh.classList.add('sort-desc', 'active');
         // 通用点击事件委托（移动端 ? 图标 / 详情弹窗 / 卡片→弹窗）
         document.addEventListener('click', (e) => {
-            // 移动端千元可赚 ? 图标
-            const helpBtn = e.target.closest('.mc-profit-help');
-            if (helpBtn) {
-                e.stopPropagation();
-                const code = helpBtn.dataset.code;
-                if (code) this.showMobileProfitHelp(code);
-                return;
-            }
-            // 详情弹窗预计收益额 ? 图标
-            const profitHelp = e.target.closest('#fdProfitHelp');
-            if (profitHelp) {
-                e.stopPropagation();
-                this._toggleFeeBreakdown();
-                return;
-            }
-            // 图表信息 ? 图标
-            const infoIcon = e.target.closest('.fd-info-icon');
-            if (infoIcon) {
-                e.stopPropagation();
-                this._showChartInfoTip(infoIcon.dataset.tip);
-                return;
-            }
+            // FIXME: showMobileProfitHelp not implemented yet
+//             const helpBtn = e.target.closest('.mc-profit-help');
+//             if (helpBtn) {
+//                 e.stopPropagation();
+//                 const code = helpBtn.dataset.code;
+//                 return;
+//             }
+//             // 详情弹窗预计收益额 ? 图标
+//             const profitHelp = e.target.closest('#fdProfitHelp');
+//             if (profitHelp) {
+//                 e.stopPropagation();
+//                 this._toggleFeeBreakdown();
+//                 return;
+//             }
+//             // 图表信息 ? 图标
+//             const infoIcon = e.target.closest('.fd-info-icon');
+//             if (infoIcon) {
+//                 e.stopPropagation();
+//                 this._showChartInfoTip(infoIcon.dataset.tip);
+//                 return;
+//             }
             // 详情弹窗内代码/名称点击 → 复制文本 (Change 6)
             const detailCopy = e.target.closest('[data-copy]');
             if (detailCopy) {
@@ -550,18 +557,18 @@ class LofFundMonitor {
                 return;
             }
             // 关闭详情弹窗
-            const closeBtn = e.target.closest('#fdCloseBtn');
-            if (closeBtn) { this.closeFundDetail(); return; }
-            if (e.target.id === 'fundDetailModal') { this.closeFundDetail(); return; }
+//             const closeBtn = e.target.closest('#fdCloseBtn');
+//             if (closeBtn) { this.closeFundDetail(); return; }
+//             if (e.target.id === 'fundDetailModal') { this.closeFundDetail(); return; }
             // PC端基金行 / 移动端卡片点击 → 详情弹窗
-            const row = e.target.closest('.fund-row');
-            const card = e.target.closest('.mobile-card');
-            if (row || card) {
-                if (e.target.closest('.col-code') || e.target.closest('.col-name') ||
-                    e.target.closest('.btn-profit-info') || e.target.closest('.mc-profit-help')) return;
-                const code = (row || card).dataset.code;
-                if (code) this.showFundDetail(code);
-            }
+//             const row = e.target.closest('.fund-row');
+//             const card = e.target.closest('.mobile-card');
+//             if (row || card) {
+//                 if (e.target.closest('.col-code') || e.target.closest('.col-name') ||
+//                     e.target.closest('.btn-profit-info') || e.target.closest('.mc-profit-help')) return;
+//                 const code = (row || card).dataset.code;
+//                 if (code) this.showFundDetail(code);
+//             }
         });
     }
 

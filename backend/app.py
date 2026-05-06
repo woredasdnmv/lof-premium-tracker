@@ -4,7 +4,7 @@ LOF基金数据服务 - RESTful API
 场内LOF基金: 实时价格 + 净值/估值 + 溢价率 + 成交额
 
 启动命令: python app.py
-依赖: pip install flask requests apscheduler flask-cors
+依赖: pip install flask requests flask-cors
 """
 import sys
 # Fix Windows console encoding before any print
@@ -135,7 +135,7 @@ def _fmt(fund: dict, detail: bool = False) -> dict:
 
 import os
 
-BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))  # repo root (backend/../)
 
 @app.route("/")
 def index():
@@ -149,6 +149,10 @@ def css_files(filename):
 @app.route("/js/<path:filename>")
 def js_files(filename):
     return send_from_directory(os.path.join(BASE_DIR, "js"), filename)
+
+@app.route("/assets/<path:filename>")
+def assets_files(filename):
+    return send_from_directory(os.path.join(BASE_DIR, "assets"), filename)
 
 
 # ══════════════════════════════════════════════════════════════════

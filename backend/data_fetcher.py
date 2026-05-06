@@ -50,9 +50,6 @@ def _is_sse_lof(code: str) -> bool:
     return code.startswith(SSE_LOF_PREFIXES)
 
 
-def _is_lof_code(code: str) -> bool:
-    return _is_sse_lof(code) or _is_sze_lof(code)
-
 
 # ── Utility ──────────────────────────────────────
 
@@ -221,7 +218,6 @@ class LOFDataFetcher:
         self._last_fetch_time: Optional[datetime] = None
         self._fetch_error: Optional[str] = None
         self.__session: Optional[requests.Session] = None
-        self._sz_lof_price_cache: Dict[str, Dict[str, Any]] = {}
 
     def _sess(self) -> requests.Session:
         if self.__session is None:

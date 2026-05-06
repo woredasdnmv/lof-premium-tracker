@@ -10,7 +10,7 @@
     <div class="container">
         <header class="header">
             <div class="header-brand">
-                <img src="icon.jpg" alt="金快查" class="brand-icon">
+                <img src="assets/icon.jpg" alt="金快查" class="brand-icon">
                 <h1>金快查</h1>
             </div>
             <div class="header-info">
@@ -123,12 +123,12 @@
                     <div class="mobile-empty"><i class="icon loading-spinner-icon">⏳</i><p>正在加载数据，请稍候...</p></div>
                 </div>
                 <div id="paginationBar" class="pagination-bar">
-                    <button id="firstPageBtn" class="page-btn" onclick="lofMonitor.goToPage(1)">首页</button>
-                    <button id="prevPageBtn" class="page-btn" onclick="lofMonitor.changePage(-1)">上一页</button>
+                    <button id="firstPageBtn" class="page-btn">首页</button>
+                    <button id="prevPageBtn" class="page-btn">上一页</button>
                     <span id="pageInfo" class="page-info">第 1 页 / 共 1 页</span>
-                    <button id="nextPageBtn" class="page-btn" onclick="lofMonitor.changePage(1)">下一页</button>
-                    <button id="lastPageBtn" class="page-btn" onclick="lofMonitor.goToLastPage()">末页</button>
-                    <select id="pageSizeSelect" class="page-size-select" onchange="lofMonitor.changePageSize(this.value)">
+                    <button id="nextPageBtn" class="page-btn">下一页</button>
+                    <button id="lastPageBtn" class="page-btn">末页</button>
+                    <select id="pageSizeSelect" class="page-size-select">
                         <option value="50" selected>50条/页</option>
                         <option value="100">100条/页</option>
                         <option value="200">200条/页</option>
@@ -138,12 +138,12 @@
         </div>
 
         <div id="loader" class="loader-overlay"><div class="loader-content"><div class="spinner"></div><p>正在连接服务器...</p><p class="loader-hint">首次加载可能需要 10-30 秒，请耐心等待</p></div></div>
-        <div id="errorContainer" class="error-container" style="display: none;">
+        <div id="errorContainer" class="error-container" style="display:none">
             <div class="error-content"><div class="error-icon">⚠️</div><p id="errorMessage">加载失败</p><button id="retryBtn" class="btn-retry">重试</button></div>
         </div>
 
         <!-- 设置弹窗 -->
-        <div id="settingsModal" class="modal-overlay" style="display: none;">
+        <div id="settingsModal" class="modal-overlay" style="display:none">
             <div class="modal-content">
                 <div class="modal-header">
                     <h3>⚙️ 筛选设置</h3>
@@ -177,7 +177,7 @@
                     <hr class="settings-divider">
                     <div class="form-group">
                         <label>💰 预计收益计算参数</label>
-                        <p class="form-hint" style="margin-bottom:12px;">申购费率、赎回费率由 API 自动获取，以下参数需自行设定</p>
+                        <p class="form-hint form-hint--margin">申购费率、赎回费率由 API 自动获取，以下参数需自行设定</p>
                     </div>
                     <div class="form-group">
                         <label>券商佣金费率</label>
@@ -219,12 +219,12 @@
                 <span class="divider">|</span>
                 <a href="privacy.html">隐私政策</a>
             </p>
-            <p class="credit" style="text-align:right; font-size:12px; color:#999; margin-top:8px;">@金快查 2026 | @HanK</p>
+            <p class="footer-credit">@金快查 2026 | @HanK</p>
         </footer>
     </div>
 
     <!-- 基金详情弹窗 -->
-    <div id="fundDetailModal" class="fund-detail-overlay" style="display:none;">
+    <div id="fundDetailModal" class="fund-detail-overlay" style="display:none">
         <div class="fund-detail-modal">
             <div class="fd-header">
                 <h3 id="fundDetailTitle">基金详情</h3>
@@ -258,11 +258,11 @@
             <div id="fdPhase2" class="fd-phase">
                 <div class="fd-chart-legend">
                     <span class="fd-legend-item">
-                        <span class="fd-legend-dot" style="background:#ff7a45"></span> 场内价格
+                        <span class="fd-legend-dot fd-legend-dot--price"></span> 场内价格
                         <button class="fd-info-icon" data-tip="price" title="了解场内价格">?</button>
                     </span>
                     <span class="fd-legend-item">
-                        <span class="fd-legend-dot" style="background:#40a9ff"></span> 场外净值
+                        <span class="fd-legend-dot fd-legend-dot--nav"></span> 场外净值
                         <button class="fd-info-icon" data-tip="nav" title="了解场外净值">?</button>
                     </span>
                 </div>

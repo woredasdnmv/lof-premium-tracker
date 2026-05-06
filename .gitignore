@@ -1,36 +1,26 @@
-# 临时文件
+# Runtime artifacts
+*.db
+*.sqlite
+__pycache__/
+*.pyc
+*.pyo
+current_snapshot.json
+fee_cache.json
+
+# Temp files
 _*.js
 _*.bat
 
-# 后端文件（用户端不需要）
-backend/
-app.py
-config.py
-data_fetcher.py
-history_db.py
-history_fetcher.py
-history_seed.json
-sz_lof_codes.json
-current_snapshot.json
-requirements.txt
+# But allow shared lib modules in functions/
+!functions/_lib.js
 
-# 数据库
-*.db
-*.sqlite
-
-# 部署配置（用户端不需要）
+# Wrangler cache
 .wrangler/
-.github/workflows/
-functions/
-cf-worker/
-render.yaml
-railway.json
-Procfile
 
 # IDE
 .vscode/
 .idea/
 
-# 系统文件
+# OS files
 .DS_Store
 Thumbs.db
