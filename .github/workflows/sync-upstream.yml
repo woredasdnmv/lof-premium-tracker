@@ -30,11 +30,11 @@ jobs:
         run: git remote add upstream https://github.com/MistyBridge/lof-premium-tracker.git
       
       - name: Fetch upstream
-        run: git fetch upstream
+        run: git fetch upstream danwangshi
       
       - name: Sync main branch
         run: |
           git checkout main
-          git fetch upstream main
-          git merge upstream/main --no-edit --strategy-option=theirs
+          git fetch upstream danwangshi
+          git merge upstream/danwangshi --no-edit --strategy-option=theirs
           git push origin main
