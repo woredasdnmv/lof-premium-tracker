@@ -6,6 +6,10 @@ on:
     - cron: '0 0 * * *'
   workflow_dispatch:  # 允许手动触发
 
+# 设置权限
+permissions:
+  contents: write  # 允许推送代码
+
 jobs:
   sync:
     runs-on: ubuntu-latest
