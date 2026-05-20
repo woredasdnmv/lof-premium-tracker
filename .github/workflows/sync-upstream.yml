@@ -31,5 +31,6 @@ jobs:
       - name: Sync main branch
         run: |
           git checkout main
-          git reset --hard upstream/main
-          git push origin main --force
+          git fetch upstream main
+          git merge upstream/main --no-edit --strategy-option=theirs
+          git push origin main
