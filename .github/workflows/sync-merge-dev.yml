@@ -1,9 +1,9 @@
-name: Sync from Upstream
+name: Sync merge-dev from Upstream danwangshi
 
 on:
   schedule:
-    # 每天 UTC 时间 0:00 运行（北京时间 8:00）
-    - cron: '0 0 * * *'
+    # 每天 UTC 时间 0:30 运行（北京时间 8:30）
+    - cron: '30 0 * * *'
   workflow_dispatch:  # 允许手动触发
 
 # 设置权限
@@ -30,11 +30,11 @@ jobs:
         run: git remote add upstream https://github.com/MistyBridge/lof-premium-tracker.git
       
       - name: Fetch upstream
-        run: git fetch upstream main
+        run: git fetch upstream danwangshi
       
-      - name: Sync main branch
+      - name: Sync merge-dev branch
         run: |
-          git checkout main
-          git fetch upstream main
-          git merge upstream/main --no-edit --strategy-option=theirs
-          git push origin main
+          git checkout merge-dev
+          git fetch upstream danwangshi
+          git merge upstream/danwangshi --no-edit --strategy-option=theirs
+          git push origin merge-dev
