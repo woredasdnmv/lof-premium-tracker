@@ -1,3 +1,2 @@
-name = "lof-fund-monitor"
-pages_build_output_dir = "."
+name = "lof-premium-tracker"
 compatibility_date = "2025-01-01"
